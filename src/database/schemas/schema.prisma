@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Genero {
+  MASCULINO
+  FEMENINO
+}
+
+enum EstadoVoto {
+  SIN_EMITIR
+  EMITIDO
+}
+
+enum EstadoJrv {
+  ABIERTA
+  CERRADA
+}
+
+enum Estado {
+  ACTIVO
+  INACTIVO
+}
+
+model partidos_politicos {
+  id_partido_politico Int      @id @default(autoincrement())
+  nombre              String   @db.VarChar(150)
+  siglas              String   @db.VarChar(20)
+  logo                String   @db.Text
+  estado              Estado   @default(ACTIVO)
+  creado_en           DateTime @default(now())
+  modificado_en       DateTime @updatedAt
+
+  candidatos candidatos_politicos[]
+}
+
+model candidatos_politicos {
+  id_candidato        Int      @id @default(autoincrement())
+  foto_candidato      String   @db.Text
+  estado              Estado   @default(ACTIVO)
+  creado_en           DateTime @default(now())
+  modificado_en       DateTime @updatedAt
+  id_partido_politico Int
+  id_persona_natural  Int?
+
+  partido_politico     partidos_politicos  @relation(fields: [id_partido_politico], references: [id_partido_politico])
+  informacion_personal personas_naturales? @relation(fields: [id_persona_natural], references: [id_persona_natural])
+}
+
+model personas_naturales {
+  id_persona_natural    Int      @id @default(autoincrement())
+  dui                   String   @unique @db.VarChar(10)
+  nombres               String   @db.VarChar(150)
+  apellidos             String   @db.VarChar(150)
+  genero                Genero
+  id_municipio          Int
+  detalle_direccion     String   @db.Text
+  fecha_nacimiento      DateTime @db.Date
+  fecha_vencimiento_dui DateTime @db.Date
+  creado_en             DateTime @default(now())
+
+  municipio            municipios             @relation(fields: [id_municipio], references: [id_municipio])
+  candidatos_politicos candidatos_politicos[]
+  jrv_miembros         jrv_miembros[]
+  detalles_sufragio    detalles_sufragio[]
+}
+
+model departamentos {
+  id_departamento Int    @id @default(autoincrement())
+  nombre          String @db.VarChar(150)
+
+  municipios municipios[]
+}
+
+model municipios {
+  id_municipio    Int    @id @default(autoincrement())
+  id_departamento Int
+  nombre          String @db.VarChar(255)
+
+  departamentos      departamentos        @relation(fields: [id_departamento], references: [id_departamento])
+  personas_naturales personas_naturales[]
+  centros_votacion   centros_votacion[]
+}
+
+model roles {
+  id_rol        Int        @id @default(autoincrement())
+  nombre        String     @unique @db.VarChar(150)
+  estado        Boolean    @default(true)
+  creado_en     DateTime   @default(now())
+  modificado_en DateTime   @updatedAt
+  usuarios      usuarios[]
+}
+
+model usuarios {
+  id_usuario         Int            @id @default(autoincrement())
+  usuario            String         @unique
+  correo_electronico String         @unique
+  clave              String         @db.Text
+  id_rol             Int
+  estado             Boolean        @default(true)
+  creado_en          DateTime       @default(now())
+  modificado_en      DateTime       @updatedAt
+  jrv_miembros       jrv_miembros[]
+
+  roles roles @relation(fields: [id_rol], references: [id_rol])
+}
+
+model centros_votacion {
+  id_centro_votacion Int       @id @default(autoincrement())
+  id_municipio       Int
+  nombre             String    @db.VarChar(255)
+  direccion          String    @db.Text
+  estado             EstadoJrv @default(CERRADA)
+  creado_en          DateTime  @default(now())
+  modificado_en      DateTime  @updatedAt
+
+  municipios            municipios              @relation(fields: [id_municipio], references: [id_municipio])
+  junta_receptora_votos junta_receptora_votos[]
+}
+
+model junta_receptora_votos {
+  id_jrv             Int       @id @default(autoincrement())
+  codigo             String    @db.VarChar(10)
+  id_centro_votacion Int
+  estado             EstadoJrv @default(CERRADA)
+  creado_en          DateTime  @default(now())
+  modificado_en      DateTime  @updatedAt
+
+  centro_votacion   centros_votacion    @relation(fields: [id_centro_votacion], references: [id_centro_votacion])
+  detalles_sufragio detalles_sufragio[]
+  jrv_miembros      jrv_miembros[]
+}
+
+model jrv_miembros {
+  id_jrv_miembro     Int      @id @default(autoincrement())
+  id_jrv             Int
+  id_persona_natural Int
+  id_usuario         Int
+  estado             Estado   @default(ACTIVO)
+  creado_en          DateTime @default(now())
+  modificado_en      DateTime @updatedAt
+
+  jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
+  informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
+  usuario              usuarios              @relation(fields: [id_usuario], references: [id_usuario])
+  detalles_sufragio    detalles_sufragio[]
+}
+
+model detalles_sufragio {
+  id_detalle_sufragio Int        @id @default(autoincrement())
+  id_personas_natural Int        @unique
+  id_jrv              Int
+  supervisado_por     Int?
+  asistio_en          DateTime?
+  estado_voto         EstadoVoto @default(SIN_EMITIR)
+  creado_en           DateTime   @default(now())
+  modificado_en       DateTime   @updatedAt
+
+  jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
+  informacion_personal personas_naturales    @relation(fields: [id_personas_natural], references: [id_persona_natural])
+  jrv_miembros         jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
+}

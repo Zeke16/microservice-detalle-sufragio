@@ -1,0 +1,13 @@
+export enum RabbitMQ {
+  DestinoSufragioQueue = 'destino-sufragio',
+}
+
+export enum DestinoSufragioMSG {
+  CREATE = 'CREATE_DESTINO_SUFRAGIO',
+  UPDATE = 'UPDATE_DESTINO_SUFRAGIO',
+  DELETE = 'DELETE_DESTINO_SUFRAGIO',
+  FIND_ALL = 'FIND_DESTINOS_SUFRAGIO',
+  FIND_ONE = 'FIND_DESTINO_SUFRAGIO',
+  SET_STATUS_VOTE = 'SET_STATUS_VOTE',
+  FIND_BY_DUI = 'FIND_BY_DUI'
+}
