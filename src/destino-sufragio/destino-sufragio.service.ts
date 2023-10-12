@@ -9,65 +9,181 @@ export class DestinoSufragioService {
   async create(
     destinoSufragioDTO: Prisma.detalles_sufragioCreateInput,
   ): Promise<detalles_sufragio> {
+    console.log(destinoSufragioDTO);
+
     return await this.model.detalles_sufragio.create({
       data: destinoSufragioDTO,
     });
   }
 
-  async findAll(): Promise<detalles_sufragio[]> {
+  async findAll(): Promise<any> {
     return await this.model.detalles_sufragio.findMany({
       select: {
         id_detalle_sufragio: true,
-        id_personas_natural: true,
+        id_persona_natural: true,
         id_jrv: true,
         supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
         modificado_en: true,
-        informacion_personal: true,
+        informacion_personal: {
+          include: {
+            municipio: {
+              include: {
+                departamentos: true,
+              },
+            },
+          },
+        },
         jrv: {
           include: {
-            centro_votacion: true
-          }
-        }
+            centro_votacion: {
+              include: {
+                municipios: {
+                  include: {
+                    departamentos: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        supervisadoPor: {
+          include: {
+            usuario: {
+              select: {
+                id_usuario: true,
+                id_rol: true,
+                nombres: true,
+                apellidos: true,
+                dui: true,
+                usuario: true,
+                estado: true,
+                creado_en: true,
+                modificado_en: true,
+                Rol: true,
+              },
+            },
+          },
+        },
       },
     });
   }
 
-  async findOne(id: number): Promise<detalles_sufragio> {
+  async findOne(id: number): Promise<any> {
     return await this.model.detalles_sufragio.findUnique({
       where: {
         id_detalle_sufragio: id,
       },
       select: {
         id_detalle_sufragio: true,
-        id_personas_natural: true,
+        id_persona_natural: true,
         id_jrv: true,
         supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
         modificado_en: true,
-        informacion_personal: true,
+        informacion_personal: {
+          include: {
+            municipio: {
+              include: {
+                departamentos: true,
+              },
+            },
+          },
+        },
         jrv: {
           include: {
-            centro_votacion: true
-          }
-        }
-      }
+            centro_votacion: {
+              include: {
+                municipios: {
+                  include: {
+                    departamentos: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        supervisadoPor: {
+          include: {
+            usuario: {
+              select: {
+                id_usuario: true,
+                id_rol: true,
+                nombres: true,
+                apellidos: true,
+                dui: true,
+                usuario: true,
+                estado: true,
+                creado_en: true,
+                modificado_en: true,
+                Rol: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
-  async update(
-    id: number,
-    centroVotacionDTO: Prisma.detalles_sufragioUpdateInput,
-  ): Promise<detalles_sufragio> {
-    return await this.model.detalles_sufragio.update({
+  async findOneByIdPersonaNatural(id: number): Promise<any> {
+    return await this.model.detalles_sufragio.findFirst({
       where: {
-        id_detalle_sufragio: id,
+        id_persona_natural: id,
       },
-      data: centroVotacionDTO,
+      select: {
+        id_detalle_sufragio: true,
+        id_persona_natural: true,
+        id_jrv: true,
+        supervisado_por: true,
+        asistio_en: true,
+        estado_voto: true,
+        creado_en: true,
+        modificado_en: true,
+        informacion_personal: {
+          include: {
+            municipio: {
+              include: {
+                departamentos: true,
+              },
+            },
+          },
+        },
+        jrv: {
+          include: {
+            centro_votacion: {
+              include: {
+                municipios: {
+                  include: {
+                    departamentos: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        supervisadoPor: {
+          include: {
+            usuario: {
+              select: {
+                id_usuario: true,
+                id_rol: true,
+                nombres: true,
+                apellidos: true,
+                dui: true,
+                usuario: true,
+                estado: true,
+                creado_en: true,
+                modificado_en: true,
+                Rol: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -79,12 +195,8 @@ export class DestinoSufragioService {
     });
   }
 
-  async changeStatus(
-    id: number,
-    id_usuario: number
-  ): Promise<any> {
+  async changeStatus(id: number, id_usuario: number): Promise<any> {
     return await this.model.detalles_sufragio.update({
-      
       where: {
         id_detalle_sufragio: id,
       },
@@ -97,48 +209,74 @@ export class DestinoSufragioService {
         informacion_personal: true,
         jrv: {
           include: {
-            centro_votacion: true
-          }
-        }
-      }
+            centro_votacion: true,
+          },
+        },
+      },
     });
   }
 
-  async findByDui(dui: string): Promise<any>{
+  async findByDui(dui: string): Promise<any> {
     const persona = await this.model.personas_naturales.findUnique({
       where: {
-        dui: dui
-      }
+        dui: dui,
+      },
     });
 
-    return this.model.detalles_sufragio.findUnique({
+    return this.model.detalles_sufragio.findFirst({
       where: {
-        id_personas_natural: persona.id_persona_natural
+        id_persona_natural: persona.id_persona_natural,
       },
       select: {
         id_detalle_sufragio: true,
-        id_personas_natural: true,
+        id_persona_natural: true,
         id_jrv: true,
         supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
         modificado_en: true,
-        informacion_personal: true,
+        informacion_personal: {
+          include: {
+            municipio: {
+              include: {
+                departamentos: true,
+              },
+            },
+          },
+        },
         jrv: {
           include: {
             centro_votacion: {
               include: {
                 municipios: {
                   include: {
-                    departamentos: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    })
+                    departamentos: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        supervisadoPor: {
+          include: {
+            usuario: {
+              select: {
+                id_usuario: true,
+                id_rol: true,
+                nombres: true,
+                apellidos: true,
+                dui: true,
+                usuario: true,
+                estado: true,
+                creado_en: true,
+                modificado_en: true,
+                Rol: true
+              },
+            },
+          },
+        },
+      },
+    });
   }
 }

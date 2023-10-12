@@ -22,10 +22,9 @@ export class DestinoSufragioController {
     return this.DestinoSufragioService.findOne(id);
   }
 
-  @MessagePattern(DestinoSufragioMSG.UPDATE)
-  async update(@Payload() payload: any) {
-    const { id, destinoSufragioDTO } = payload;
-    return this.DestinoSufragioService.update(id, destinoSufragioDTO);
+  @MessagePattern(DestinoSufragioMSG.FIND_BY_PERSONA_NATURAL)
+  async findOneByIdPersonaNatural(@Payload() id: number) {
+    return this.DestinoSufragioService.findOneByIdPersonaNatural(id);
   }
 
   @MessagePattern(DestinoSufragioMSG.DELETE)

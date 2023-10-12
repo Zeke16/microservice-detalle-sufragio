@@ -62,12 +62,11 @@ model personas_naturales {
   id_municipio          Int
   detalle_direccion     String   @db.Text
   fecha_nacimiento      DateTime @db.Date
-  fecha_vencimiento_dui DateTime @db.Date
+  fecha_vencimiento_dui DateTime
   creado_en             DateTime @default(now())
 
   municipio            municipios             @relation(fields: [id_municipio], references: [id_municipio])
   candidatos_politicos candidatos_politicos[]
-  jrv_miembros         jrv_miembros[]
   detalles_sufragio    detalles_sufragio[]
 }
 
@@ -98,17 +97,19 @@ model roles {
 }
 
 model usuarios {
-  id_usuario         Int            @id @default(autoincrement())
-  usuario            String         @unique
-  correo_electronico String         @unique
-  clave              String         @db.Text
-  id_rol             Int
-  estado             Boolean        @default(true)
-  creado_en          DateTime       @default(now())
-  modificado_en      DateTime       @updatedAt
-  jrv_miembros       jrv_miembros[]
+  id_usuario    Int      @id @default(autoincrement())
+  id_rol        Int
+  nombres       String
+  apellidos     String
+  dui           String   @unique
+  usuario       String   @unique
+  clave         String   @db.Text
+  estado        Boolean  @default(true)
+  creado_en     DateTime @default(now())
+  modificado_en DateTime @updatedAt
 
-  roles roles @relation(fields: [id_rol], references: [id_rol])
+  jrv_miembros jrv_miembros[]
+  Rol          roles          @relation(fields: [id_rol], references: [id_rol])
 }
 
 model centros_votacion {
@@ -118,7 +119,7 @@ model centros_votacion {
   direccion          String    @db.Text
   estado             EstadoJrv @default(CERRADA)
   creado_en          DateTime  @default(now())
-  modificado_en      DateTime  @updatedAt
+  modificado_en         DateTime  @updatedAt
 
   municipios            municipios              @relation(fields: [id_municipio], references: [id_municipio])
   junta_receptora_votos junta_receptora_votos[]
@@ -138,24 +139,23 @@ model junta_receptora_votos {
 }
 
 model jrv_miembros {
-  id_jrv_miembro     Int      @id @default(autoincrement())
-  id_jrv             Int
-  id_persona_natural Int
-  id_usuario         Int
-  estado             Estado   @default(ACTIVO)
-  creado_en          DateTime @default(now())
-  modificado_en      DateTime @updatedAt
+  id_jrv_miembro Int      @id @default(autoincrement())
+  id_jrv         Int
+  id_usuario     Int
+  estado         Estado   @default(ACTIVO)
+  creado_en      DateTime @default(now())
+  modificado_en  DateTime @updatedAt
 
-  jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
-  informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
-  usuario              usuarios              @relation(fields: [id_usuario], references: [id_usuario])
-  detalles_sufragio    detalles_sufragio[]
+  jrv               junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
+  usuario           usuarios              @relation(fields: [id_usuario], references: [id_usuario])
+  detalles_sufragio detalles_sufragio[]
 }
 
 model detalles_sufragio {
   id_detalle_sufragio Int        @id @default(autoincrement())
-  id_personas_natural Int        @unique
+  id_persona_natural  Int
   id_jrv              Int
+  uuid_info           String?    @db.VarChar(255)
   supervisado_por     Int?
   asistio_en          DateTime?
   estado_voto         EstadoVoto @default(SIN_EMITIR)
@@ -163,6 +163,6 @@ model detalles_sufragio {
   modificado_en       DateTime   @updatedAt
 
   jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
-  informacion_personal personas_naturales    @relation(fields: [id_personas_natural], references: [id_persona_natural])
-  jrv_miembros         jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
+  informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
+  supervisadoPor         jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
 }
