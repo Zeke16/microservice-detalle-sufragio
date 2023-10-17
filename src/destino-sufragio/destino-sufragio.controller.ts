@@ -23,8 +23,8 @@ export class DestinoSufragioController {
   }
 
   @MessagePattern(DestinoSufragioMSG.FIND_BY_PERSONA_NATURAL)
-  async findOneByIdPersonaNatural(@Payload() id: number) {
-    return this.DestinoSufragioService.findOneByIdPersonaNatural(id);
+  async findOneByIdPersonaNatural(@Payload() payload: any) {
+    return this.DestinoSufragioService.findOneByIdPersonaNatural(payload.id_persona_natural);
   }
 
   @MessagePattern(DestinoSufragioMSG.DELETE)
@@ -32,15 +32,15 @@ export class DestinoSufragioController {
     return this.DestinoSufragioService.delete(id);
   }
 
-  @MessagePattern(DestinoSufragioMSG.SET_STATUS_VOTE)
-  async changeStatus(@Payload() payload: any) {
-    const { id,  id_usuario } = payload;
-
-    return this.DestinoSufragioService.changeStatus(id,  id_usuario);
-  }
-
   @MessagePattern(DestinoSufragioMSG.FIND_BY_DUI)
   async findByDui(@Payload() payload: any) {
     return await this.DestinoSufragioService.findByDui(payload);
+  }
+
+  @MessagePattern(DestinoSufragioMSG.CREATE_VOTE)
+  async crearVoto(@Payload() payload: any) {
+    const { id_detalle_sufragio, genero, departamento, municipio, dui, codigo} = payload;
+
+    return this.DestinoSufragioService.crearVoto(id_detalle_sufragio, genero, departamento, municipio, dui, codigo);
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EstadoVoto, Prisma, detalles_sufragio } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma.service';
+const { v4: uuidv4 } = require('uuid');
 
 @Injectable()
 export class DestinoSufragioService {
@@ -22,6 +23,8 @@ export class DestinoSufragioService {
         id_detalle_sufragio: true,
         id_persona_natural: true,
         id_jrv: true,
+        uuid_info: true,
+        ledger_id: true,
         supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
@@ -80,6 +83,8 @@ export class DestinoSufragioService {
         id_detalle_sufragio: true,
         id_persona_natural: true,
         id_jrv: true,
+        uuid_info: true,
+        ledger_id: true,
         supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
@@ -129,15 +134,17 @@ export class DestinoSufragioService {
     });
   }
 
-  async findOneByIdPersonaNatural(id: number): Promise<any> {
+  async findOneByIdPersonaNatural(id_persona_natural: number): Promise<any> {
     return await this.model.detalles_sufragio.findFirst({
       where: {
-        id_persona_natural: id,
+        id_persona_natural: id_persona_natural,
       },
       select: {
         id_detalle_sufragio: true,
         id_persona_natural: true,
         id_jrv: true,
+        uuid_info: true,
+        ledger_id: true,
         supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
@@ -195,27 +202,6 @@ export class DestinoSufragioService {
     });
   }
 
-  async changeStatus(id: number, id_usuario: number): Promise<any> {
-    return await this.model.detalles_sufragio.update({
-      where: {
-        id_detalle_sufragio: id,
-      },
-      data: {
-        estado_voto: EstadoVoto.EMITIDO,
-        supervisado_por: id_usuario,
-        asistio_en: new Date(),
-      },
-      select: {
-        informacion_personal: true,
-        jrv: {
-          include: {
-            centro_votacion: true,
-          },
-        },
-      },
-    });
-  }
-
   async findByDui(dui: string): Promise<any> {
     const persona = await this.model.personas_naturales.findUnique({
       where: {
@@ -230,6 +216,8 @@ export class DestinoSufragioService {
       select: {
         id_detalle_sufragio: true,
         id_persona_natural: true,
+        uuid_info: true,
+        ledger_id: true,
         id_jrv: true,
         supervisado_por: true,
         asistio_en: true,
@@ -271,12 +259,57 @@ export class DestinoSufragioService {
                 estado: true,
                 creado_en: true,
                 modificado_en: true,
-                Rol: true
+                Rol: true,
               },
             },
           },
         },
       },
     });
+  }
+
+  async crearVoto(
+    id_detalle_sufragio: number,
+    genero: string,
+    departamento: string,
+    municipio: string,
+    dui: string,
+    codigo: string,
+  ) {
+    const claves = `${codigo}${dui}${municipio}${departamento}${genero}${id_detalle_sufragio}`;
+    const uuid = uuidv4(claves);
+
+    const crearVoto = await fetch(
+      `${process.env.QLDB_URL}/sufragios`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          codigo: codigo,
+          dui: dui,
+          departamento: departamento,
+          municipio: municipio,
+          sexo: genero,
+          uuid: uuid,
+        }),
+      },
+    ).then((res) => res.json());
+
+    
+    const actualizarEstado = await this.model.detalles_sufragio.update({
+      where: {
+        id_detalle_sufragio: id_detalle_sufragio,
+      },
+      data: {
+        estado_voto: 'SIN_EMITIR',
+        ledger_id: crearVoto.sufragioId,
+        uuid_info: uuid
+      },
+    });
+
+    return actualizarEstado;
   }
 }

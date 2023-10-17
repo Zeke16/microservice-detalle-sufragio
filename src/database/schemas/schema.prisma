@@ -16,6 +16,7 @@ enum Genero {
 enum EstadoVoto {
   SIN_EMITIR
   EMITIDO
+  VALIDADO
 }
 
 enum EstadoJrv {
@@ -119,7 +120,7 @@ model centros_votacion {
   direccion          String    @db.Text
   estado             EstadoJrv @default(CERRADA)
   creado_en          DateTime  @default(now())
-  modificado_en         DateTime  @updatedAt
+  modificado_en      DateTime  @updatedAt
 
   municipios            municipios              @relation(fields: [id_municipio], references: [id_municipio])
   junta_receptora_votos junta_receptora_votos[]
@@ -152,17 +153,19 @@ model jrv_miembros {
 }
 
 model detalles_sufragio {
-  id_detalle_sufragio Int        @id @default(autoincrement())
+  id_detalle_sufragio Int     @id @default(autoincrement())
   id_persona_natural  Int
   id_jrv              Int
-  uuid_info           String?    @db.VarChar(255)
-  supervisado_por     Int?
-  asistio_en          DateTime?
-  estado_voto         EstadoVoto @default(SIN_EMITIR)
-  creado_en           DateTime   @default(now())
-  modificado_en       DateTime   @updatedAt
+  uuid_info           String? @db.VarChar(255)
+  ledger_id           String? @db.VarChar(100)
+
+  supervisado_por Int?
+  asistio_en      DateTime?
+  estado_voto     EstadoVoto @default(SIN_EMITIR)
+  creado_en       DateTime   @default(now())
+  modificado_en   DateTime   @updatedAt
 
   jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
   informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
-  supervisadoPor         jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
+  supervisadoPor       jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
 }
