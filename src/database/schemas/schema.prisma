@@ -169,3 +169,13 @@ model detalles_sufragio {
   informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
   supervisadoPor       jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
 }
+
+model sufragios {
+  id_sufragio  Int    @id @default(autoincrement())
+  codigo       String @db.VarChar(100)
+  genero       String @db.VarChar(100)
+  municipio    String @db.VarChar(100)
+  departamento String @db.VarChar(100)
+  ledger_id         String @db.VarChar(100)
+  id_voto      Int 
+}

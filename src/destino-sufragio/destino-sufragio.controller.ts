@@ -5,7 +5,9 @@ import { DestinoSufragioService } from './destino-sufragio.service';
 
 @Controller()
 export class DestinoSufragioController {
-    constructor(private readonly DestinoSufragioService: DestinoSufragioService) {}
+  constructor(
+    private readonly DestinoSufragioService: DestinoSufragioService,
+  ) {}
 
   @MessagePattern(DestinoSufragioMSG.CREATE)
   async create(@Payload() payload: any) {
@@ -24,7 +26,9 @@ export class DestinoSufragioController {
 
   @MessagePattern(DestinoSufragioMSG.FIND_BY_PERSONA_NATURAL)
   async findOneByIdPersonaNatural(@Payload() payload: any) {
-    return this.DestinoSufragioService.findOneByIdPersonaNatural(payload.id_persona_natural);
+    return this.DestinoSufragioService.findOneByIdPersonaNatural(
+      payload.id_persona_natural,
+    );
   }
 
   @MessagePattern(DestinoSufragioMSG.DELETE)
@@ -39,8 +43,41 @@ export class DestinoSufragioController {
 
   @MessagePattern(DestinoSufragioMSG.CREATE_VOTE)
   async crearVoto(@Payload() payload: any) {
-    const { id_detalle_sufragio, genero, departamento, municipio, dui, codigo} = payload;
+    const {
+      id_detalle_sufragio,
+      genero,
+      departamento,
+      municipio,
+      dui,
+      codigo,
+    } = payload;
 
-    return this.DestinoSufragioService.crearVoto(id_detalle_sufragio, genero, departamento, municipio, dui, codigo);
+    return this.DestinoSufragioService.crearVoto(
+      id_detalle_sufragio,
+      genero,
+      departamento,
+      municipio,
+      dui,
+      codigo,
+    );
+  }
+
+  @MessagePattern(DestinoSufragioMSG.VERIFY_STATUS_VOTE)
+  async verificarVoto(@Payload() payload: any) {
+    const { ledger_id } = payload;
+    return this.DestinoSufragioService.verificarVoto(ledger_id);
+  }
+
+  @MessagePattern(DestinoSufragioMSG.VALIDATE_VOTE)
+  async validarVoto(@Payload() payload: any) {
+    const { ledger_id, id_detalle_sufragio} = payload;
+    return this.DestinoSufragioService.validarVoto(ledger_id, id_detalle_sufragio);
+  }
+
+  @MessagePattern(DestinoSufragioMSG.CAST_VOTE)
+  async emitirVoto(@Payload() payload: any) {
+    const { ledger_id, candidato_id, id_detalle_sufragio} = payload;
+    
+    return this.DestinoSufragioService.emitirVoto(ledger_id, candidato_id, id_detalle_sufragio);
   }
 }
