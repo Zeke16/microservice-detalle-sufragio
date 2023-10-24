@@ -149,7 +149,6 @@ model jrv_miembros {
 
   jrv               junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
   usuario           usuarios              @relation(fields: [id_usuario], references: [id_usuario])
-  detalles_sufragio detalles_sufragio[]
 }
 
 model detalles_sufragio {
@@ -159,7 +158,7 @@ model detalles_sufragio {
   uuid_info           String? @db.VarChar(255)
   ledger_id           String? @db.VarChar(100)
 
-  supervisado_por Int?
+  
   asistio_en      DateTime?
   estado_voto     EstadoVoto @default(SIN_EMITIR)
   creado_en       DateTime   @default(now())
@@ -167,7 +166,6 @@ model detalles_sufragio {
 
   jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
   informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
-  supervisadoPor       jrv_miembros?         @relation(fields: [supervisado_por], references: [id_jrv_miembro])
 }
 
 model sufragios {

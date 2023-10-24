@@ -25,7 +25,6 @@ export class DestinoSufragioService {
         id_jrv: true,
         uuid_info: true,
         ledger_id: true,
-        supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
@@ -48,24 +47,6 @@ export class DestinoSufragioService {
                     departamentos: true,
                   },
                 },
-              },
-            },
-          },
-        },
-        supervisadoPor: {
-          include: {
-            usuario: {
-              select: {
-                id_usuario: true,
-                id_rol: true,
-                nombres: true,
-                apellidos: true,
-                dui: true,
-                usuario: true,
-                estado: true,
-                creado_en: true,
-                modificado_en: true,
-                Rol: true,
               },
             },
           },
@@ -85,7 +66,6 @@ export class DestinoSufragioService {
         id_jrv: true,
         uuid_info: true,
         ledger_id: true,
-        supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
@@ -108,24 +88,6 @@ export class DestinoSufragioService {
                     departamentos: true,
                   },
                 },
-              },
-            },
-          },
-        },
-        supervisadoPor: {
-          include: {
-            usuario: {
-              select: {
-                id_usuario: true,
-                id_rol: true,
-                nombres: true,
-                apellidos: true,
-                dui: true,
-                usuario: true,
-                estado: true,
-                creado_en: true,
-                modificado_en: true,
-                Rol: true,
               },
             },
           },
@@ -145,7 +107,6 @@ export class DestinoSufragioService {
         id_jrv: true,
         uuid_info: true,
         ledger_id: true,
-        supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
@@ -168,24 +129,6 @@ export class DestinoSufragioService {
                     departamentos: true,
                   },
                 },
-              },
-            },
-          },
-        },
-        supervisadoPor: {
-          include: {
-            usuario: {
-              select: {
-                id_usuario: true,
-                id_rol: true,
-                nombres: true,
-                apellidos: true,
-                dui: true,
-                usuario: true,
-                estado: true,
-                creado_en: true,
-                modificado_en: true,
-                Rol: true,
               },
             },
           },
@@ -203,6 +146,8 @@ export class DestinoSufragioService {
   }
 
   async findByDui(dui: string): Promise<any> {
+    
+    
     const persona = await this.model.personas_naturales.findUnique({
       where: {
         dui: dui,
@@ -219,7 +164,6 @@ export class DestinoSufragioService {
         uuid_info: true,
         ledger_id: true,
         id_jrv: true,
-        supervisado_por: true,
         asistio_en: true,
         estado_voto: true,
         creado_en: true,
@@ -242,24 +186,6 @@ export class DestinoSufragioService {
                     departamentos: true,
                   },
                 },
-              },
-            },
-          },
-        },
-        supervisadoPor: {
-          include: {
-            usuario: {
-              select: {
-                id_usuario: true,
-                id_rol: true,
-                nombres: true,
-                apellidos: true,
-                dui: true,
-                usuario: true,
-                estado: true,
-                creado_en: true,
-                modificado_en: true,
-                Rol: true,
               },
             },
           },
@@ -367,7 +293,6 @@ export class DestinoSufragioService {
 
     const verificarEstadoVoto = await this.verificarVoto(ledger_id);
     let lastIndex = verificarEstadoVoto.length - 1;
-    console.log(verificarEstadoVoto[lastIndex]);
     
     const guardarVoto = await this.model.sufragios.create({
       data: {
