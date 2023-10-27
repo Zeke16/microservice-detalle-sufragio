@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { EstadoVoto, Prisma, detalles_sufragio } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma.service';
+import { io, Socket } from 'socket.io-client';
 const { v4: uuidv4 } = require('uuid');
 const date = require('date-and-time');
 
 @Injectable()
 export class DestinoSufragioService {
-  constructor(private readonly model: PrismaService) {}
+  public socketClient: Socket;
+  constructor(private readonly model: PrismaService) {
+    this.socketClient = io('http://localhost:3002');
+  }
 
   async create(
     destinoSufragioDTO: Prisma.detalles_sufragioCreateInput,
   ): Promise<detalles_sufragio> {
-
     return await this.model.detalles_sufragio.create({
       data: destinoSufragioDTO,
     });
@@ -146,8 +149,6 @@ export class DestinoSufragioService {
   }
 
   async findByDui(dui: string): Promise<any> {
-    
-    
     const persona = await this.model.personas_naturales.findUnique({
       where: {
         dui: dui,
@@ -292,8 +293,8 @@ export class DestinoSufragioService {
     }).then((res) => res.json());
 
     const verificarEstadoVoto = await this.verificarVoto(ledger_id);
-    let lastIndex = verificarEstadoVoto.length - 1;
-    
+    const lastIndex = verificarEstadoVoto.length - 1;
+
     const guardarVoto = await this.model.sufragios.create({
       data: {
         codigo: verificarEstadoVoto[lastIndex].data.codigo,
@@ -301,9 +302,11 @@ export class DestinoSufragioService {
         municipio: verificarEstadoVoto[lastIndex].data.municipio,
         ledger_id: ledger_id,
         genero: verificarEstadoVoto[lastIndex].data.sexo,
-        id_voto: verificarEstadoVoto[lastIndex].data.votoId ,
-      }
-    })
+        id_voto: verificarEstadoVoto[lastIndex].data.votoId,
+      },
+    });
+
+    this.socketClient.emit('newSufragio', guardarVoto);
 
     const actualizarEstado = await this.model.detalles_sufragio.update({
       where: {

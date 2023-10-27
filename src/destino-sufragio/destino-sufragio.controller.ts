@@ -70,14 +70,21 @@ export class DestinoSufragioController {
 
   @MessagePattern(DestinoSufragioMSG.VALIDATE_VOTE)
   async validarVoto(@Payload() payload: any) {
-    const { ledger_id, id_detalle_sufragio} = payload;
-    return this.DestinoSufragioService.validarVoto(ledger_id, id_detalle_sufragio);
+    const { ledger_id, id_detalle_sufragio } = payload;
+    return this.DestinoSufragioService.validarVoto(
+      ledger_id,
+      id_detalle_sufragio,
+    );
   }
 
   @MessagePattern(DestinoSufragioMSG.CAST_VOTE)
   async emitirVoto(@Payload() payload: any) {
-    const { ledger_id, candidato_id, id_detalle_sufragio} = payload;
-    
-    return this.DestinoSufragioService.emitirVoto(ledger_id, candidato_id, id_detalle_sufragio);
+    const { ledger_id, candidato_id, id_detalle_sufragio } = payload;
+
+    return this.DestinoSufragioService.emitirVoto(
+      ledger_id,
+      candidato_id,
+      id_detalle_sufragio,
+    );
   }
 }
