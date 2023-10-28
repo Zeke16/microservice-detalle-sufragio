@@ -14,3 +14,7 @@ export enum DestinoSufragioMSG {
   VALIDATE_VOTE = 'VALIDATE_VOTE',
   CAST_VOTE = 'CAST_VOTE'
 }
+
+export enum SufragiosMSG {
+  FIND_ALL = 'FIND_ALL_SUFRAGIOS',
+}

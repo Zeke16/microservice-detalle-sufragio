@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { DestinoSufragioMSG } from 'src/common/constantes';
+import { DestinoSufragioMSG, SufragiosMSG } from 'src/common/constantes';
 import { DestinoSufragioService } from './destino-sufragio.service';
 
 @Controller()
@@ -17,6 +17,11 @@ export class DestinoSufragioController {
   @MessagePattern(DestinoSufragioMSG.FIND_ALL)
   async findAll() {
     return this.DestinoSufragioService.findAll();
+  }
+
+  @MessagePattern(SufragiosMSG.FIND_ALL)
+  async findAllSufragios() {
+    return this.DestinoSufragioService.findAllSufragios();
   }
 
   @MessagePattern(DestinoSufragioMSG.FIND_ONE)

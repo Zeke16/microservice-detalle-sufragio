@@ -9,7 +9,7 @@ const date = require('date-and-time');
 export class DestinoSufragioService {
   public socketClient: Socket;
   constructor(private readonly model: PrismaService) {
-    this.socketClient = io('http://localhost:3002');
+    this.socketClient = io(`http://${process.env.IP}:3002`);
   }
 
   async create(
@@ -56,6 +56,41 @@ export class DestinoSufragioService {
         },
       },
     });
+  }
+
+  async findAllSufragios(): Promise<any> {
+    const votos = await this.model.sufragios.findMany({
+      select: {
+        id_sufragio: true,
+        id_voto: true,
+        codigo: true,
+        ledger_id: true,
+        departamento: true,
+        municipio: true,
+        genero: true,
+      },
+    });
+
+    const votosConCandidatos = votos.map(async (item) => {
+      const voto = await this.model.candidatos_politicos.findUnique({
+        select: {
+          partido_politico: true,
+          foto_candidato: true,
+          informacion_personal: true,
+        },
+        where: {
+          id_candidato: item.id_voto,
+        },
+      });
+
+      const newVoto = {
+        ...item,
+        ...voto,
+      };
+      return newVoto;
+    });
+
+    return await Promise.all(votosConCandidatos);
   }
 
   async findOne(id: number): Promise<any> {
@@ -280,6 +315,8 @@ export class DestinoSufragioService {
     candidato_id: number,
     id_detalle_sufragio: number,
   ) {
+    console.log("EN EMITIR");
+    
     const emitirVoto = await fetch(`${process.env.QLDB_URL}/ejecutar`, {
       method: 'PUT',
       headers: {
@@ -306,7 +343,30 @@ export class DestinoSufragioService {
       },
     });
 
-    this.socketClient.emit('newSufragio', guardarVoto);
+    const votosConCandidatos = await this.model.candidatos_politicos.findUnique(
+      {
+        select: {
+          partido_politico: true,
+          foto_candidato: true,
+          informacion_personal: true,
+        },
+        where: {
+          id_candidato: verificarEstadoVoto[lastIndex].data.votoId,
+        },
+      },
+    );
+
+    const newVoto = {
+      codigo: verificarEstadoVoto[lastIndex].data.codigo,
+      departamento: verificarEstadoVoto[lastIndex].data.departamento,
+      municipio: verificarEstadoVoto[lastIndex].data.municipio,
+      ledger_id: ledger_id,
+      genero: verificarEstadoVoto[lastIndex].data.sexo,
+      id_voto: verificarEstadoVoto[lastIndex].data.votoId,
+      ...votosConCandidatos,
+    };
+
+    this.socketClient.emit('newSufragio', newVoto);
 
     const actualizarEstado = await this.model.detalles_sufragio.update({
       where: {
