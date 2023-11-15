@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { EstadoVoto, Prisma, detalles_sufragio } from '@prisma/client';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  EstadoVoto,
+  Prisma,
+  detalles_sufragio,
+  sufragios,
+} from '@prisma/client';
 import { PrismaService } from 'src/database/prisma.service';
 import { io, Socket } from 'socket.io-client';
 const { v4: uuidv4 } = require('uuid');
@@ -9,7 +14,7 @@ const date = require('date-and-time');
 export class DestinoSufragioService {
   public socketClient: Socket;
   constructor(private readonly model: PrismaService) {
-    this.socketClient = io(`http://${process.env.IP}:3002`);
+    this.socketClient = io(`${process.env.IP}`);
   }
 
   async create(
@@ -59,38 +64,17 @@ export class DestinoSufragioService {
   }
 
   async findAllSufragios(): Promise<any> {
-    const votos = await this.model.sufragios.findMany({
-      select: {
-        id_sufragio: true,
-        id_voto: true,
-        codigo: true,
-        ledger_id: true,
-        departamento: true,
-        municipio: true,
-        genero: true,
-      },
-    });
-
-    const votosConCandidatos = votos.map(async (item) => {
-      const voto = await this.model.candidatos_politicos.findUnique({
-        select: {
-          partido_politico: true,
-          foto_candidato: true,
-          informacion_personal: true,
-        },
-        where: {
-          id_candidato: item.id_voto,
-        },
-      });
-
-      const newVoto = {
-        ...item,
-        ...voto,
-      };
-      return newVoto;
-    });
-
-    return await Promise.all(votosConCandidatos);
+    let votos = [];
+    for (let i = 1; i < 4; i++) {
+      let objetoVoto = await this.obtenerVotos(i);
+      if(objetoVoto == null){
+        continue
+      }
+      votos.push(objetoVoto)
+    }
+    
+    this.socketClient.emit('votes-bands', votos);
+    return votos;
   }
 
   async findOne(id: number): Promise<any> {
@@ -315,8 +299,8 @@ export class DestinoSufragioService {
     candidato_id: number,
     id_detalle_sufragio: number,
   ) {
-    console.log("EN EMITIR");
-    
+    console.log('EN EMITIR');
+
     const emitirVoto = await fetch(`${process.env.QLDB_URL}/ejecutar`, {
       method: 'PUT',
       headers: {
@@ -335,38 +319,13 @@ export class DestinoSufragioService {
     const guardarVoto = await this.model.sufragios.create({
       data: {
         codigo: verificarEstadoVoto[lastIndex].data.codigo,
-        departamento: verificarEstadoVoto[lastIndex].data.departamento,
-        municipio: verificarEstadoVoto[lastIndex].data.municipio,
+        departamento: `${verificarEstadoVoto[lastIndex].data.departamento}`,
+        municipio: `${verificarEstadoVoto[lastIndex].data.municipio}`,
         ledger_id: ledger_id,
         genero: verificarEstadoVoto[lastIndex].data.sexo,
         id_voto: verificarEstadoVoto[lastIndex].data.votoId,
       },
     });
-
-    const votosConCandidatos = await this.model.candidatos_politicos.findUnique(
-      {
-        select: {
-          partido_politico: true,
-          foto_candidato: true,
-          informacion_personal: true,
-        },
-        where: {
-          id_candidato: verificarEstadoVoto[lastIndex].data.votoId,
-        },
-      },
-    );
-
-    const newVoto = {
-      codigo: verificarEstadoVoto[lastIndex].data.codigo,
-      departamento: verificarEstadoVoto[lastIndex].data.departamento,
-      municipio: verificarEstadoVoto[lastIndex].data.municipio,
-      ledger_id: ledger_id,
-      genero: verificarEstadoVoto[lastIndex].data.sexo,
-      id_voto: verificarEstadoVoto[lastIndex].data.votoId,
-      ...votosConCandidatos,
-    };
-
-    this.socketClient.emit('newSufragio', newVoto);
 
     const actualizarEstado = await this.model.detalles_sufragio.update({
       where: {
@@ -377,7 +336,131 @@ export class DestinoSufragioService {
         ledger_id: null,
       },
     });
-
+    this.findAllSufragios();
     return actualizarEstado;
+  }
+
+  async obtenerVotos(id_partido: number): Promise<any> {
+    const departamentos = [
+      'AHUACHAPAN',
+      'SANTA ANA',
+      'SONSONATE',
+      'CHALATENANGO',
+      'LA LIBERTAD',
+      'SAN SALVADOR',
+      'CUSCATLAN',
+      'LA PAZ',
+      'CABAÑAS',
+      'SAN VICENTE',
+      'USULUTAN',
+      'SAN MIGUEL',
+      'MORAZAN',
+      'LA UNION',
+    ];
+
+    const informacion_partidos = await this.model.sufragios.findFirst({
+      select: {
+        partidos: {
+          select: {
+            id_partido_politico: true,
+            nombre: true,
+            siglas: true,
+            logo: true,
+            candidatos: {
+              select: {
+                informacion_personal: {
+                  select: {
+                    nombres: true,
+                    apellidos: true,
+                  },
+                },
+                foto_candidato: true,
+                rol: true,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        id_voto: id_partido,
+      },
+    });
+
+    if(!informacion_partidos){
+      return;
+    }
+
+    const conteosPICHEgen = this.model.sufragios.groupBy({
+      by: ['genero'],
+      _count: {
+        id_voto: true,
+      },
+      where: {
+        id_voto: id_partido,
+      },
+    });
+
+    const conteosPICHEdep = this.model.sufragios.groupBy({
+      by: ['departamento'],
+      _count: {
+        id_voto: true,
+      },
+      where: {
+        id_voto: id_partido,
+      },
+    });
+    const [conteosPICHEGenero, conteosPICHEDepartamento] = await Promise.all([
+      conteosPICHEgen,
+      conteosPICHEdep,
+    ]);
+
+    let masculino = 0;
+    let femenino = 0;
+    conteosPICHEGenero.forEach((element) => {
+      if (element.genero === 'M') {
+        masculino = element._count.id_voto;
+      } else if (element.genero === 'F') {
+        femenino = element._count.id_voto;
+      }
+    });
+
+    let departamentosCount = [];
+    conteosPICHEDepartamento.forEach((elemento) => {
+      departamentosCount.push({
+        nombre: departamentos[Number(elemento.departamento) - 1],
+        _count: elemento._count.id_voto,
+      });
+    });
+
+    let countGeneral = await this.model.sufragios.count({
+      where: {
+        id_voto: id_partido,
+      },
+    });
+
+    let candidatosInfo = [];
+    informacion_partidos.partidos.candidatos.forEach((elemento) => {
+      candidatosInfo.push({
+        nombre: `${elemento.informacion_personal.nombres} ${elemento.informacion_personal.apellidos}`,
+        foto: `https://evotes-app-administracion.s3.us-west-2.amazonaws.com/${elemento.foto_candidato}`,
+        rol: `${elemento.rol}`,
+      });
+    });
+
+    const newObject = {
+      id_partido: informacion_partidos.partidos.id_partido_politico,
+      nombre: informacion_partidos.partidos.nombre,
+      siglas: informacion_partidos.partidos.siglas,
+      logo: `https://evotes-app-administracion.s3.us-west-2.amazonaws.com/${informacion_partidos.partidos.logo}`,
+      candidatos: candidatosInfo,
+      genero: {
+        masculino,
+        femenino,
+      },
+      departamento: departamentosCount,
+      _count: countGeneral,
+    };
+
+    return newObject;
   }
 }

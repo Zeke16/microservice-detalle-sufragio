@@ -39,6 +39,7 @@ model partidos_politicos {
   modificado_en       DateTime @updatedAt
 
   candidatos candidatos_politicos[]
+  votos      sufragios[]
 }
 
 model candidatos_politicos {
@@ -49,6 +50,7 @@ model candidatos_politicos {
   modificado_en       DateTime @updatedAt
   id_partido_politico Int
   id_persona_natural  Int?
+  rol                 String   @db.Text
 
   partido_politico     partidos_politicos  @relation(fields: [id_partido_politico], references: [id_partido_politico])
   informacion_personal personas_naturales? @relation(fields: [id_persona_natural], references: [id_persona_natural])
@@ -147,8 +149,8 @@ model jrv_miembros {
   creado_en      DateTime @default(now())
   modificado_en  DateTime @updatedAt
 
-  jrv               junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
-  usuario           usuarios              @relation(fields: [id_usuario], references: [id_usuario])
+  jrv     junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
+  usuario usuarios              @relation(fields: [id_usuario], references: [id_usuario])
 }
 
 model detalles_sufragio {
@@ -158,11 +160,10 @@ model detalles_sufragio {
   uuid_info           String? @db.VarChar(255)
   ledger_id           String? @db.VarChar(100)
 
-  
-  asistio_en      DateTime?
-  estado_voto     EstadoVoto @default(SIN_EMITIR)
-  creado_en       DateTime   @default(now())
-  modificado_en   DateTime   @updatedAt
+  asistio_en    DateTime?
+  estado_voto   EstadoVoto @default(SIN_EMITIR)
+  creado_en     DateTime   @default(now())
+  modificado_en DateTime   @updatedAt
 
   jrv                  junta_receptora_votos @relation(fields: [id_jrv], references: [id_jrv])
   informacion_personal personas_naturales    @relation(fields: [id_persona_natural], references: [id_persona_natural])
@@ -174,6 +175,8 @@ model sufragios {
   genero       String @db.VarChar(100)
   municipio    String @db.VarChar(100)
   departamento String @db.VarChar(100)
-  ledger_id         String @db.VarChar(100)
-  id_voto      Int 
+  ledger_id    String? @db.VarChar(100)
+  id_voto      Int
+
+  partidos partidos_politicos @relation(fields: [id_voto], references: [id_partido_politico])
 }
